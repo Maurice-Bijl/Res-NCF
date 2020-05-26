@@ -5,5 +5,6 @@ In this repository 3 neural-based approaches of one-class collaborative filterin
 * NCR**
 * Res-NCF
 
-'* original code (Theano implementation) from He Xiangnan et al. Neural Collaborative Filtering. In WWW 2017.
-'** original code from Song, B. et al. 2018. "Neural collaborative ranking"
+\* original code (Theano implementation) from He Xiangnan et al. Neural Collaborative Filtering. In WWW 2017.
+
+\** original code from Song, B. et al. 2018. "Neural collaborative ranking"
