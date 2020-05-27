@@ -18,37 +18,8 @@ from keras.layers import Embedding, Input, Dense, Add, Flatten, Multiply, Concat
 def init_normal(shape, dtype=None):
     return K.random_normal (shape, dtype = dtype)
 
-# def ResMLP(res_layer, weights, reg_layers):
-#     ''' Residual building blocks. When the final layer has a different shape than the identity block,
-#     the shape of the idenity block is changed to the correct size with a dense layer'''
-#     assert len (weights) == len (reg_layers), "weights and reg_layers do not have the same length"
-#
-#     for block in range (len (weights)):
-#         shortcut = res_layer
-#         layers = weights [block]
-#         reg = reg_layers [block]
-#         assert len (layers) == len (reg), "weights_%d and reg_layers_%d do not have the same length" % (block, block)
-#         for index, weight in enumerate (layers):
-#             res_layer = Dense (weight, kernel_regularizer = l2 (reg [index]),
-#                                name = 'layer%d_%d' % (block, index)) (res_layer)
-#             res_layer =  BatchNormalization(name = 'batch%d_%d' % (block, index)) (res_layer)
-#             res_layer = Activation('relu')(res_layer)
-#
-#         ## identity block
-#         if shortcut.shape [1] == res_layer.shape[1]: ## check if shapes are the same
-#             res_layer = Add(name = "Add_%d" % block)([res_layer, shortcut])
-#
-#         ## dense block
-#         else:
-#             shortcut = Dense (res_layer.shape[1], kernel_regularizer = l2 (reg [len (layers) - 1]),
-#                               name = 'dense_short%d' % block) (shortcut)
-#             shortcut = BatchNormalization(name = 'batch_short%d' % block)(shortcut)
-#             shortcut = Activation('relu')(shortcut)
-#             res_layer = Add(name = "Add_%d" % block)([res_layer, shortcut])
-#     return res_layer
-
 def ResMLP(res_layer, weights, reg_layers):
-    ''' Residual building blocks. When the final layer has a different shape than the identity block,
+    ''' "ReLU before addition" Residual building blocks. When the final layer has a different shape than the identity block,
     the shape of the idenity block is changed to the correct size with a dense layer'''
     assert len (weights) == len (reg_layers), "weights and reg_layers do not have the same length"
 
@@ -58,29 +29,58 @@ def ResMLP(res_layer, weights, reg_layers):
         reg = reg_layers [block]
         assert len (layers) == len (reg), "weights_%d and reg_layers_%d do not have the same length" % (block, block)
         for index, weight in enumerate (layers):
-            if index == (len(layers)-1):
-                res_layer = Dense (weight, kernel_regularizer = l2 (reg [index]),
-                                   name = 'layer%d_%d' % (block, index)) (res_layer)
-                res_layer = BatchNormalization (name = 'batch%d_%d' % (block, index)) (res_layer)
-                ## identity block
-                if shortcut.shape [1] == res_layer.shape [1]:  ## check if shapes are the same
-                    res_layer = Add (name = "Add_%d" % block) ([res_layer, shortcut])
+            res_layer = Dense (weight, kernel_regularizer = l2 (reg [index]),
+                               name = 'layer%d_%d' % (block, index)) (res_layer)
+            res_layer =  BatchNormalization(name = 'batch%d_%d' % (block, index)) (res_layer)
+            res_layer = Activation('relu')(res_layer)
 
-                ## dense block
-                else:
-                    shortcut = Dense (res_layer.shape [1], kernel_regularizer = l2 (reg [len (layers) - 1]),
-                                      name = 'dense_short%d' % block) (shortcut)
-                    shortcut = BatchNormalization (name = 'batch_short%d' % block) (shortcut)
-                    res_layer = Add (name = "Add_%d" % block) ([res_layer, shortcut])
-                res_layer = Activation ('relu') (res_layer)
+        ## identity block
+        if shortcut.shape [1] == res_layer.shape[1]: ## check if shapes are the same
+            res_layer = Add(name = "Add_%d" % block)([res_layer, shortcut])
 
-            else:
-                res_layer = Dense (weight, kernel_regularizer = l2 (reg [index]),
-                                   name = 'layer%d_%d' % (block, index)) (res_layer)
-                res_layer =  BatchNormalization(name = 'batch%d_%d' % (block, index)) (res_layer)
-                res_layer = Activation('relu')(res_layer)
-
+        ## dense block
+        else:
+            shortcut = Dense (res_layer.shape[1], kernel_regularizer = l2 (reg [len (layers) - 1]),
+                              name = 'dense_short%d' % block) (shortcut)
+            shortcut = BatchNormalization(name = 'batch_short%d' % block)(shortcut)
+            shortcut = Activation('relu')(shortcut)
+            res_layer = Add(name = "Add_%d" % block)([res_layer, shortcut])
     return res_layer
+
+# def ResMLP(res_layer, weights, reg_layers):
+#     '''Original Residual building blocks. When the final layer has a different shape than the identity block,
+#     the shape of the idenity block is changed to the correct size with a dense layer'''
+#     assert len (weights) == len (reg_layers), "weights and reg_layers do not have the same length"
+
+#     for block in range (len (weights)):
+#         shortcut = res_layer
+#         layers = weights [block]
+#         reg = reg_layers [block]
+#         assert len (layers) == len (reg), "weights_%d and reg_layers_%d do not have the same length" % (block, block)
+#         for index, weight in enumerate (layers):
+#             if index == (len(layers)-1):
+#                 res_layer = Dense (weight, kernel_regularizer = l2 (reg [index]),
+#                                    name = 'layer%d_%d' % (block, index)) (res_layer)
+#                 res_layer = BatchNormalization (name = 'batch%d_%d' % (block, index)) (res_layer)
+#                 ## identity block
+#                 if shortcut.shape [1] == res_layer.shape [1]:  ## check if shapes are the same
+#                     res_layer = Add (name = "Add_%d" % block) ([res_layer, shortcut])
+
+#                 ## dense block
+#                 else:
+#                     shortcut = Dense (res_layer.shape [1], kernel_regularizer = l2 (reg [len (layers) - 1]),
+#                                       name = 'dense_short%d' % block) (shortcut)
+#                     shortcut = BatchNormalization (name = 'batch_short%d' % block) (shortcut)
+#                     res_layer = Add (name = "Add_%d" % block) ([res_layer, shortcut])
+#                 res_layer = Activation ('relu') (res_layer)
+
+#             else:
+#                 res_layer = Dense (weight, kernel_regularizer = l2 (reg [index]),
+#                                    name = 'layer%d_%d' % (block, index)) (res_layer)
+#                 res_layer =  BatchNormalization(name = 'batch%d_%d' % (block, index)) (res_layer)
+#                 res_layer = Activation('relu')(res_layer)
+
+#     return res_layer
 
 def ResMF(num_users, num_items, mf_dim=10, reg_mf=0, layers=[[20,20],[20, 10]], reg_layers=[[0,0],[0, 0]]):
     assert len(layers) == len(reg_layers)
